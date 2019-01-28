@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import division
+
 
 __author__    = 'Maximilian Bisani'
 __version__   = '$LastChangedRevision: 96 $'
@@ -37,7 +37,7 @@ author:    %(__author__)s
 
 import mGramCounts, itertools, operator
 from pprint import pprint
-from misc import restartable, once, reversed, sorted, set
+from misc import restartable, once
 
 # ===========================================================================
 class Discount(object):
@@ -74,7 +74,7 @@ class AbsoluteDiscounting(Discount):
         return max(value - self.discount, 0.0)
 
     def report(self, f):
-        print >> f, 'D =', self.discount
+        print('D =', self.discount, file=f)
 
 
 class TripleAbsoluteDiscounting(Discount):
@@ -110,9 +110,9 @@ class TripleAbsoluteDiscounting(Discount):
         return 0.0
 
     def report(self, f):
-        print >> f, 'D1  =', self.discount1
-        print >> f, 'D2  =', self.discount2
-        print >> f, 'D3+ =', self.discount3plus
+        print('D1  =', self.discount1, file=f)
+        print('D2  =', self.discount2, file=f)
+        print('D3+ =', self.discount3plus, file=f)
 
 
 class ZipfGoodTuringDiscounting(Discount):
@@ -140,7 +140,7 @@ class ZipfGoodTuringDiscounting(Discount):
 
         if floor:
             self.alpha = min(self.alpha, floor.alpha)
-            self.store = map(min, self.store, floor.store)
+            self.store = list(map(min, self.store, floor.store))
 
     def rStar(self, r):
         """
@@ -162,10 +162,10 @@ class ZipfGoodTuringDiscounting(Discount):
             return self.rStar(value)
 
     def report(self, f):
-        print >> f, 'k      =', self.k
-        print >> f, 'alpha  =', self.alpha
-        print >> f, 'r*     =', self.store[1:6]
-        print >> f, 'r - r* =', [ r - self(r) for r in range(1, 6) ]
+        print('k      =', self.k, file=f)
+        print('alpha  =', self.alpha, file=f)
+        print('r*     =', self.store[1:6], file=f)
+        print('r - r* =', [ r - self(r) for r in range(1, 6) ], file=f)
 
 # ===========================================================================
 if True:
@@ -232,7 +232,7 @@ class LanguageModelBuilder(object):
 
     def groupedCounts(self, allCounts, order):
         it = self.rawCountsForOrder(allCounts, order)
-        history, oldest, values = it.next()
+        history, oldest, values = next(it)
         group = []
         accu = CountsAccumulator()
         accu.set(values)
@@ -277,7 +277,7 @@ class LanguageModelBuilder(object):
     def makeZeroOrder(self, allCounts):
         minCount, discount = self.parametrizeOrder(0)
 
-        counts = sumLotsOfCounts(itertools.imap(lambda item : item[1], allCounts))
+        counts = sumLotsOfCounts(map(lambda item : item[1], allCounts))
         effectiveCounts, total = self.effectiveCounts(counts, minCount, discount)
         effectiveTotal = effectiveCounts.sum()
 
@@ -425,7 +425,7 @@ class LanguageModelBuilder(object):
 
     def log(self, *args):
         if self.logFile is not None:
-            print >> self.logFile, ' '.join(map(str, args))
+            print(' '.join(map(str, args)), file=self.logFile)
 
     def make(self, vocabulary, counts, order):
         self.setVocabulary(vocabulary)
@@ -464,7 +464,7 @@ class LmArpaWriter(LmDummy):
         self.highestOrder = highestOrder
         self.data = []
         if notice:
-            print >> self.file, notice
+            print(notice, file=self.file)
 
     def boSection(self, order):
         return self.add
@@ -510,26 +510,26 @@ class LmArpaWriter(LmDummy):
             else:
                 return outerJoin(sorted(probabilities(m)), [])
 
-        print >> f
-        print >> f, '\\data\\'
+        print(file=f)
+        print('\\data\\', file=f)
         for m in range(M):
             n = 0
             for x in joined(m): n += 1
-            print >> f, 'ngram %d=%d' % (m+1, n)
-        print >> f
+            print('ngram %d=%d' % (m+1, n), file=f)
+        print(file=f)
         for m in range(M):
-            print >> f, '\\%d-grams:' % (m+1)
+            print('\\%d-grams:' % (m+1), file=f)
             for gram, probability, backOff in joined(m):
                 if probability is None:
                     score = -99
                 else:
                     score = math.log10(probability)
                 if backOff is None or backOff == 1.0:
-                    print >> f, '%f\t%s' % (score, ' '.join(gram))
+                    print('%f\t%s' % (score, ' '.join(gram)), file=f)
                 else:
-                    print >> f, '%f\t%s\t%f' % (score, ' '.join(gram), math.log10(backOff))
-            print >> f
-        print >> f, '\\end\\'
+                    print('%f\t%s\t%f' % (score, ' '.join(gram), math.log10(backOff)), file=f)
+            print(file=f)
+        print('\\end\\', file=f)
 
 
 class LmEstarWriter(LmDummy):
@@ -577,25 +577,25 @@ class LmEstarWriter(LmDummy):
         def __init__(self, file, vocabulary, notice):
             self.file = file
             self.vocabulary = vocabulary
-            print >> self.file, notice
-            print >> self.file, '\\data\\'
+            print(notice, file=self.file)
+            print('\\data\\', file=self.file)
 
         def include(self, fname):
-            print >> self.file, '\\include: %s \\' % fname
+            print('\\include: %s \\' % fname, file=self.file)
 
         def __call__(self, history, probabilities):
             history_string = ' '.join(map(self.vocabulary.symbol, history))
-            print >> self.file, '\\history:', history_string, '\\'
+            print('\\history:', history_string, '\\', file=self.file)
             for predicted, probability in probabilities:
                 symbol = self.vocabulary.symbol(predicted)
                 if symbol is None:
                     symbol = '__backoff__'
-                print >> self.file, '\t%s\t%g' % (
+                print('\t%s\t%g' % (
                     symbol,
-                    probability)
+                    probability), file=self.file)
 
         def __del__(self):
-            print >> self.file, '\\end\\'
+            print('\\end\\', file=self.file)
             self.file.close()
 
     def filename(self, which):
@@ -658,7 +658,7 @@ class Lm(LmDummy):
                 n.probabilities[predicted] = probability
 
     def finalize(self):
-        for n in self.nodes.values():
+        for n in list(self.nodes.values()):
             if len(n.history) == 0: continue
             shorterHistory = n.history[:-1]
             n.parent = self.nodes[shorterHistory]
@@ -695,7 +695,7 @@ class Lm(LmDummy):
         probabilities = self.getList(node, parentProbabilities)
         total = sum([ p for w, p in probabilities ])
         if abs(total - 1.0) > 1e-6:
-            print >> sys.stdout, 'warning: denormalized history:', node.history, total
+            print('warning: denormalized history:', node.history, total, file=sys.stdout)
         for child in node.children:
             self.checkNormalisation(child, probabilities)
 
@@ -729,10 +729,10 @@ def loadCounts(fname, vocabulary, binaryCountFile=None):
         counts = SentenceStartRemover(vocabulary, counts)
         counts = contract(counts)
         counts = store(counts, big=True, filename=binaryCountFile)
-    except NonMonotonousHistoriesError, exc:
+    except NonMonotonousHistoriesError as exc:
         h1, h2 = exc. args
-        print h1, map(vocabulary.symbol, h1)
-        print h2, map(vocabulary.symbol, h2)
+        print(h1, list(map(vocabulary.symbol, h1)))
+        print(h2, list(map(vocabulary.symbol, h2)))
         raise
     return counts
 
@@ -740,11 +740,11 @@ def loadCounts(fname, vocabulary, binaryCountFile=None):
 def makeLmWriter(options):
     if options.lm_format == 'arpa':
         fname = options.lm
-        print >> sys.stdout, 'will write LM to', fname, '...'
+        print('will write LM to', fname, '...', file=sys.stdout)
         lm = LmArpaWriter(gOpenOut(fname), options.order - 1, notice)
     elif options.lm_format == 'estar':
         filePrefix, fileSuffix = os.path.splitext(options.lm)
-        print >> sys.stdout, 'will write LM to %s-*%s ...' % (filePrefix, fileSuffix)
+        print('will write LM to %s-*%s ...' % (filePrefix, fileSuffix), file=sys.stdout)
         lm = LmEstarWriter(filePrefix, fileSuffix, notice)
     else:
         raise ValueError(options.lm_format)
@@ -773,7 +773,7 @@ def main(options, args):
     builder.setHighestOrder(options.order - 1)
 
     if options.count_cutoffs:
-        cutoffs = map(int, options.count_cutoffs.split())
+        cutoffs = list(map(int, options.count_cutoffs.split()))
         builder.setCountCutoffs(cutoffs)
 
     binaryCountFile = options.read + '.bin'
@@ -790,7 +790,7 @@ def main(options, args):
 
     maximumOrder = maximumCountsOrder(coc)
     if builder.highestOrder > maximumOrder:
-        print 'warning: no counts for orders above %d' % (maximumOrder+1)
+        print('warning: no counts for orders above %d' % (maximumOrder+1))
         builder.setHighestOrder(maximumOrder)
 
     builder.estimateDiscounts(coc)
@@ -803,7 +803,7 @@ def main(options, args):
     builder.build(counts, lm)
 
     if __debug__ and False: ### TESTING
-        print >> sys.stdout, 'verifying normalization ...'
+        print('verifying normalization ...', file=sys.stdout)
         lm2 = Lm(lm)
         lm2.checkNormalisation()
 

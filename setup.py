@@ -25,9 +25,12 @@ commercially. In any case guarantee/warranty shall be limited to gross
 negligent actions or intended actions or fraudulent concealment.
 """
 
+import setuptools
 from distutils.core import setup, Extension
 import numpy
 import os
+
+install_requires = ["numpy"]
 
 sequiturExtension = Extension(
     '_sequitur_',
@@ -101,9 +104,10 @@ lmScripts = [
 
 setup(
     name        = 'sequitur',
-    version     = 'perpetually-alpha',
+    version     = '0.1.0',
     description = 'sequence and joint-sequence modelling tool',
     author      = 'Maximilian Bisani',
     py_modules = sequiturModules,
     ext_modules = [sequiturExtension],
+    install_requires = install_requires,
     scripts = sequiturScripts)

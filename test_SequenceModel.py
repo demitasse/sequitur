@@ -42,7 +42,7 @@ class SequenceModelEstimatorTestCase(unittest.TestCase):
                     sum += p
 #               print u, v, sum
 #               print
-                self.failUnlessAlmostEqual(sum, 1.0)
+                self.assertAlmostEqual(sum, 1.0)
 
     def testEmpty(self):
         evidence = []
@@ -65,7 +65,7 @@ class SequenceModelEstimatorTestCase(unittest.TestCase):
 
     def show(sslf, model):
         for (history, predicted), probability in model:
-            print history, predicted, probability
+            print(history, predicted, probability)
 
 
 if __name__ == '__main__':

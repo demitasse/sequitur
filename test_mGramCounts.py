@@ -34,18 +34,18 @@ class MGramsTestCase(TestCase):
     def templateTestX(self, mGramsFromX, events, order):
         iMgram = 0
         for mgram in mGramsFromX(events, order):
-            self.failUnless(type(mgram) is tuple)
-            self.failUnless(len(mgram) == 2)
+            self.assertTrue(type(mgram) is tuple)
+            self.assertTrue(len(mgram) == 2)
             history, predicted = mgram
-            self.failUnlessEqual(predicted, events[iMgram])
-            self.failUnless(type(history) is tuple)
-            self.failUnless((len(history) <= order) or (order is None))
+            self.assertEqual(predicted, events[iMgram])
+            self.assertTrue(type(history) is tuple)
+            self.assertTrue((len(history) <= order) or (order is None))
             iMgram += 1
-        self.failUnlessEqual(iMgram, len(events))
+        self.assertEqual(iMgram, len(events))
 
     def templateTest(self, length, order):
-        self.templateTestX(mGramsFromIter,    xrange(length), order)
-        self.templateTestX(mGramsFromSequence, range(length), order)
+        self.templateTestX(mGramsFromIter,    range(length), order)
+        self.templateTestX(mGramsFromSequence, list(range(length)), order)
 
     def runTest(self):
         for length in range(20):

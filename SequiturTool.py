@@ -1,4 +1,4 @@
-from __future__ import division
+
 
 __author__    = 'Maximilian Bisani'
 __version__   = '$LastChangedRevision: 96 $'
@@ -28,13 +28,14 @@ negligent actions or intended actions or fraudulent concealment.
 """
 
 import os.path, sys
-import cPickle as pickle
+import pickle
 import operator
 import numpy as num
 from sequitur import Sequitur, ModelTemplate, DefaultDiscountAdjuster, StaticDiscounts, FixedDiscounts, EagerDiscountAdjuster
 from sequitur import Translator
 from Evaluation import Evaluator
 from tool import UsageError
+import collections
 
 class OnlineTester(object):
     def __init__(self, name, sample):
@@ -45,8 +46,8 @@ class OnlineTester(object):
     def __call__(self, log, context, model):
         translator = Translator(model)
         result = self.evaluator.evaluate(translator)
-        print >> log, 'ER %s: string errors %s    symbol errors %s' % (
-            self.name, result.stringError, result.symbolError)
+        print('ER %s: string errors %s    symbol errors %s' % (
+            self.name, result.stringError, result.symbolError), file=log)
 
 
 def transposeSample(sample):
@@ -79,7 +80,7 @@ class Tool:
             self.trainSample, self.develSample = partitionSample(self.trainSample, portion)
         else:
             self.develSample = self.loadSample(self.options.develSample)
-        print >> self.log, 'training sample: %d + %d devel' % (len(self.trainSample), len(self.develSample))
+        print('training sample: %d + %d devel' % (len(self.trainSample), len(self.develSample)), file=self.log)
 
     def trainModel(self, initialModel):
         self.loadSamples()
@@ -89,7 +90,7 @@ class Tool:
 
         if self.options.fixed_discount:
             discount = eval(self.options.fixed_discount)
-            if not operator.isSequenceType(discount):
+            if not isinstance(discount, collections.Sequence):
                 discount = [discount]
             discount = num.array(discount)
         else:
@@ -121,8 +122,8 @@ class Tool:
         template.useMaximumApproximation(bool(self.options.viterbi))
 
         if self.options.minIterations > self.options.maxIterations:
-            print >> self.log, 'invalid limits on number of iterations %d > %d' % \
-                  (self.options.minIterations,self.options.maxIterations)
+            print('invalid limits on number of iterations %d > %d' % \
+                  (self.options.minIterations,self.options.maxIterations), file=self.log)
             return
         template.minIterations = self.options.minIterations
         template.maxIterations = self.options.maxIterations
@@ -157,7 +158,7 @@ class Tool:
             model = ModelTemplate.resume(self.options.resume_from_checkpoint)
             self.sequitur = model.sequitur
         elif self.options.modelFile:
-            model = pickle.load(open(self.options.modelFile))
+            model = pickle.load(open(self.options.modelFile, "rb"))
             self.sequitur = model.sequitur
         else:
             self.sequitur = Sequitur()
@@ -169,7 +170,7 @@ class Tool:
         if self.options.trainSample:
             model = self.trainModel(model)
             if not model:
-                print >> self.log, 'failed to estimate or load model'
+                print('failed to estimate or load model', file=self.log)
                 return
 
         if not model:
@@ -182,23 +183,23 @@ class Tool:
 
         if self.options.newModelFile:
             oldSize, newSize = model.strip()
-            print >> self.log, 'stripped number of multigrams from %d to %d' % (oldSize, newSize)
-            f = open(self.options.newModelFile, 'w')
-            pickle.dump(model, f, pickle.HIGHEST_PROTOCOL)
+            print('stripped number of multigrams from %d to %d' % (oldSize, newSize), file=self.log)
+            f = open(self.options.newModelFile, 'wb')
+            pickle.dump(model, f)
             f.close()
             del f
 
         if self.options.shouldSelfTest:
-            print >> self.log, 'warning: --self-test does not treat pronunciation variants correctly'
+            print('warning: --self-test does not treat pronunciation variants correctly', file=self.log)
             if not self.develSample:
-                print >> self.log, 'error: cannot do --self-test without --devel sample'
+                print('error: cannot do --self-test without --devel sample', file=self.log)
             else:
                 translator = Translator(model)
                 evaluator = Evaluator()
                 evaluator.setSample(self.develSample)
                 evaluator.verboseLog = self.log
                 result = evaluator.evaluate(translator)
-                print >> self.log, result
+                print(result, file=self.log)
 
         return model
 

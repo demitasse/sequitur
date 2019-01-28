@@ -34,13 +34,13 @@ commercially. In any case guarantee/warranty shall be limited to gross
 negligent actions or intended actions or fraudulent concealment.
 """
 
-import math, sets, sys
+import math, sys
 import SequiturTool
 from sequitur import Translator
-from misc import gOpenIn, gOpenOut, set
+from misc import gOpenIn, gOpenOut
 
 # ===========================================================================
-def loadPlainSample(fname, encoding = None):
+def loadPlainSample(fname, encoding=None):
     sample = []
     for line in gOpenIn(fname, encoding or defaultEncoding):
         fields = line.split()
@@ -138,14 +138,14 @@ def mainTest(translator, testSample, options):
     evaluator = Evaluator()
     evaluator.setSample(testSample)
     evaluator.resultFile = resultFile
-    evaluator.verboseLog = stdout
+    evaluator.verboseLog = sys.stdout
     if options.test_segmental:
         supraSegmental = set(['.', "'", '"'])
         def removeSupraSegmental(phon):
-            return filter(lambda p: p not in supraSegmental, phon)
+            return [p for p in phon if p not in supraSegmental]
         evaluator.compareFilter = removeSupraSegmental
     result = evaluator.evaluate(translator)
-    print >> stdout, result
+    print(result)
 
 def mainApply(translator, options):
     if options.phoneme_to_phoneme:
@@ -174,16 +174,16 @@ def mainApply(translator, options):
                     except StopIteration:
                         break
                     posterior = math.exp(logLik - nBest.logLikTotal)
-                    print >> stdout, ('%s\t%d\t%f\t%s' % \
-                           (word, nVariants, posterior, ' '.join(result)))
+                    print(('%s\t%d\t%f\t%s' % \
+                           (word, nVariants, posterior, ' '.join(result))))
                     totalPosterior += posterior
                     nVariants += 1
             else:
                 result = translator(left)
-                print >> stdout, ('%s\t%s' % (word, ' '.join(result)))
-        except translator.TranslationFailure, exc:
+                print(('%s\t%s' % (word, ' '.join(result))))
+        except translator.TranslationFailure as exc:
             try:
-                print >> stderr, 'failed to convert "%s": %s' % (word, exc)
+                print('failed to convert "%s": %s' % (word, exc), file=sys.stderr)
             except Exception:
                 pass
 
@@ -197,7 +197,7 @@ def main(options, args):
     if options.fakeTranslator:
         translator = MemoryTranslator(loadSample(options.fakeTranslator))
     else:
-        model = SequiturTool.procureModel(options, loadSample, log=stdout)
+        model = SequiturTool.procureModel(options, loadSample, log=sys.stdout)
         if not model:
             return 1
         if options.testSample or options.applySample:
@@ -223,7 +223,7 @@ if __name__ == '__main__':
     tool.addOptions(optparser)
     SequiturTool.addTrainOptions(optparser)
     optparser.add_option(
-        '-e', '--encoding', default='ISO-8859-15',
+        '-e', '--encoding', default='UTF-8',
         help='use character set encoding ENC', metavar='ENC')
     optparser.add_option(
         '-P', '--phoneme-to-phoneme', action='store_true',
@@ -252,12 +252,7 @@ if __name__ == '__main__':
 
     options, args = optparser.parse_args()
 
-    import codecs
     global defaultEncoding
     defaultEncoding = options.encoding
-    global stdout, stderr
-    encoder, decoder, streamReader, streamWriter = codecs.lookup(options.encoding)
-    stdout = streamWriter(sys.stdout)
-    stderr = streamWriter(sys.stderr)
 
     tool.run(main, options, args)

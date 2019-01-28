@@ -1,4 +1,4 @@
-from __future__ import division
+
 
 __author__    = 'Maximilian Bisani'
 __version__   = '$LastChangedRevision: 96 $'
@@ -250,10 +250,10 @@ def hasSignificantDecrease(series):
 
     delta = y - mean - slope * x
     if not fabs(sum(delta)) < fabs(mean) * 1e-14:
-        print 'Minimization.py:223:', sum(delta), mean
+        print('Minimization.py:223:', sum(delta), mean)
 
     sigma = sqrt(sum(delta ** 2) / (N * (N-1)))
     sigmaSlope = sigma / sqrt(xx)
 
-    print 'b=%f   sigma=%f   sigma_b=%f' % (slope, sigma, sigmaSlope)
+    print('b=%f   sigma=%f   sigma_b=%f' % (slope, sigma, sigmaSlope))
     return slope < - 2.326348 * sigmaSlope

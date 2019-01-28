@@ -35,7 +35,7 @@ if __debug__:
             self.seq = seq
         def __iter__(self):
             it = iter(self.seq)
-            previous = it.next()
+            previous = next(it)
             yield previous
             for item in it:
                 if previous[0] > item[0]:
@@ -48,7 +48,7 @@ if __debug__:
             self.seq = seq
         def __iter__(self):
             it = iter(self.seq)
-            previous = it.next()
+            previous = next(it)
             yield previous
             for item in it:
                 if previous[0] >= item[0]:
@@ -76,7 +76,7 @@ def mergeSort(seqs):
         s = assertIsSorted(s)
         it = iter(s)
         try:
-            queue.append((it.next(), it.next))
+            queue.append((next(it), it.__next__))
         except StopIteration:
             pass
     heapq.heapify(queue)
@@ -95,7 +95,7 @@ def consolidateInPlaceAdd(seq):
     """
     seq = assertIsSorted(seq)
     it = iter(seq)
-    key, value = it.next()
+    key, value = next(it)
     ownsValue = False
     for k, v in it:
         if k == key:
@@ -118,7 +118,7 @@ def aggregate(seq):
     seq = assertIsSorted(seq)
     it = iter(seq)
 
-    key, value = it.next()
+    key, value = next(it)
     current = [value]
     for k, value in it:
         if k == key:
@@ -141,7 +141,7 @@ def leftJoin(seqA, seqB):
     try:
         for aKey, aValue in aIter:
             while aKey > bKey:
-                bKey, bValue = bIter.next()
+                bKey, bValue = next(bIter)
             if aKey == bKey:
                 yield aKey, aValue, bValue
             else:
@@ -161,7 +161,7 @@ def innerJoin(seqA, seqB):
     for aKey, aValue in aIter:
         while aKey > bKey:
             try:
-                bKey, bValue = bIter.next()
+                bKey, bValue = next(bIter)
             except StopIteration:
                 return
         if aKey == bKey:
@@ -175,11 +175,11 @@ def outerJoin(seqA, seqB):
     bIter = iter(seqB)
 
     try:
-        aKey, aValue = aIter.next()
+        aKey, aValue = next(aIter)
     except StopIteration:
         aIter = None
     try:
-        bKey, bValue = bIter.next()
+        bKey, bValue = next(bIter)
     except StopIteration:
         bIter = None
 
@@ -199,12 +199,12 @@ def outerJoin(seqA, seqB):
 
         if aNext:
             try:
-                aKey, aValue = aIter.next()
+                aKey, aValue = next(aIter)
             except StopIteration:
                 aIter = None
         if bNext:
             try:
-                bKey, bValue = bIter.next()
+                bKey, bValue = next(bIter)
             except StopIteration:
                 bIter = None
 
@@ -224,7 +224,7 @@ def outerJoinMany(*seqs):
         s = assertIsSorted(s)
         it = iter(s)
         try:
-            key, value = it.next()
+            key, value = next(it)
             front.append([ii+1, key, value, it])
         except StopIteration:
             pass
@@ -238,7 +238,7 @@ def outerJoinMany(*seqs):
             if key == minKey:
                 row[ii] = value
                 try:
-                    front[f][1:3] = it.next()
+                    front[f][1:3] = next(it)
                 except StopIteration:
                     remove.append(ii)
             else:
@@ -258,7 +258,7 @@ class monodict(object):
         self.it = iter(seq)
         self.recentKey = None
         try:
-            self.key, self.value = self.it.next()
+            self.key, self.value = next(self.it)
         except StopIteration:
             self.key = None
 
@@ -269,7 +269,7 @@ class monodict(object):
             self.recentKey = key
             while key > self.key:
                 try:
-                    self.key, self.value = self.it.next()
+                    self.key, self.value = next(self.it)
                 except StopIteration:
                     raise KeyError(key)
             if key != self.key:

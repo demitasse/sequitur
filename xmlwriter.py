@@ -25,21 +25,21 @@ commercially. In any case guarantee/warranty shall be limited to gross
 negligent actions or intended actions or fraudulent concealment.
 """
 
-import codecs, string, types
+import string, types
+from functools import reduce
 
 class XmlWriter:
-    def __init__(self, file, encoding='ISO-8859-1'):
+    def __init__(self, file, encoding='UTF-8'):
         self.path = []
         self.encoding = encoding
-        encoder, decoder, streamReader, streamWriter = codecs.lookup(encoding)
-        self.file = streamWriter(file)
+        self.file = open(file.fileno(), "w", encoding=encoding)
         self.margin = 78
 
     def write(self, data):
         self.file.write(data)
 
     def begin(self):
-        self.write(u'<?xml version="1.0" encoding="%s"?>\n' %
+        self.write('<?xml version="1.0" encoding="%s"?>\n' %
                    self.encoding)
 
     def end(self):
@@ -47,7 +47,7 @@ class XmlWriter:
         pass
 
     def indent_str(self):
-        return u'  ' * len(self.path)
+        return '  ' * len(self.path)
 
     def escapeSpecialCharacters(self, w):
         w = string.replace(w, '&', '&amp;')
@@ -56,31 +56,31 @@ class XmlWriter:
         return w
 
     def formTag(self, element, attr=[]):
-        result = string.join([element] + [ u'%s="%s"' % kv for kv in attr ])
+        result = string.join([element] + [ '%s="%s"' % kv for kv in attr ])
         return self.escapeSpecialCharacters(result)
 
     def open(self, element, **args):
-        attr = filter(lambda (k, v): v is not None, args.items())
-        self.write(self.indent_str() + u'<' + self.formTag(element, attr) + u'>\n')
+        attr = [k_v1 for k_v1 in list(args.items()) if k_v1[1] is not None]
+        self.write(self.indent_str() + '<' + self.formTag(element, attr) + '>\n')
         self.path.append(element)
 
     def empty(self, element, **args):
-        attr = filter(lambda (k, v): v is not None, args.items())
-        self.write(self.indent_str() + u'<' + self.formTag(element, attr) + u'/>\n')
+        attr = [k_v2 for k_v2 in list(args.items()) if k_v2[1] is not None]
+        self.write(self.indent_str() + '<' + self.formTag(element, attr) + '/>\n')
 
     def close(self, element):
         assert element == self.path[-1]
         del self.path[-1]
-        self.write(self.indent_str() + u'</' + element + u'>\n')
+        self.write(self.indent_str() + '</' + element + '>\n')
 
     def openComment(self):
-        self.write(u'<!--\n')
+        self.write('<!--\n')
         self.path.append('u<!--')
 
     def closeComment(self):
         assert self.path[-1] == 'u<!--'
         del self.path[-1]
-        self.write(u'-->\n')
+        self.write('-->\n')
 
     formatRaw = 0
     formatIndent = 1
@@ -104,39 +104,39 @@ class XmlWriter:
 
     def cdata(self, w, format = formatFill):
         if 'u<!--' in self.path:
-            w = w.replace(u'--', u'=') # comment must not contain double-hyphens
+            w = w.replace('--', '=') # comment must not contain double-hyphens
         if format == self.formatRaw:
             out = [ w ]
         elif format == self.formatIndent:
             indentStr = self.indent_str()
-            out = [ indentStr + line for line in w.split(u'\n') ]
+            out = [ indentStr + line for line in w.split('\n') ]
         elif format == self.formatBreakLines:
-            out = [ self.fillParagraph(line) for line in w.split(u'\n') ]
+            out = [ self.fillParagraph(line) for line in w.split('\n') ]
             out = reduce(operator.add, out)
         elif format == self.formatFill:
             out = self.fillParagraph(w)
-        self.write(string.join(out, u'\n') + u'\n')
+        self.write(string.join(out, '\n') + '\n')
 
     def formatted_cdata(self, s):
-        for w in string.split(s, u'\\n'):
+        for w in string.split(s, '\\n'):
             self.cdata(w, self.formatFill)
 
     def comment(self, comment):
-        comment = string.replace(comment, u'--', u'=') # comment must not contain double-hyphens
-        self.cdata(u'<!-- ' + comment + u' -->')
+        comment = string.replace(comment, '--', '=') # comment must not contain double-hyphens
+        self.cdata('<!-- ' + comment + ' -->')
 
     def element(self, element, cdata=None, **args):
         if cdata is None:
-            apply(self.empty, (element,), args)
+            self.empty(*(element,), **args)
         else:
-            attr = filter(lambda (k, v): v is not None, args.items())
+            attr = [k_v for k_v in list(args.items()) if k_v[1] is not None]
             s = self.indent_str() \
-                + u'<' + self.formTag(element, attr) + u'>' \
-                + unicode(cdata) \
-                + u'</' + element + u'>'
+                + '<' + self.formTag(element, attr) + '>' \
+                + str(cdata) \
+                + '</' + element + '>'
             if len(s) <= self.margin:
-                self.write(s + u'\n')
+                self.write(s + '\n')
             else:
-                apply(self.open, (element,), args)
+                self.open(*(element,), **args)
                 self.cdata(cdata)
                 self.close(element)

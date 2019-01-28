@@ -53,13 +53,13 @@ negligent actions or intended actions or fraudulent concealment.
 """
 
 import sys
-import cPickle as pickle
+import pickle
 from elementtree.ElementTree import ElementTree, Element, Comment, SubElement
-from itertools import ifilter, starmap
+from itertools import starmap
 import mGramCounts
 from sequitur import Segmenter, Translator
 from g2p import loadBlissLexicon
-from misc import gOpenIn, gOpenOut, set, reversed
+from misc import gOpenIn, gOpenOut
 
 # ===========================================================================
 nonLmTokens = set("""
@@ -141,7 +141,7 @@ class Fragmentizer:
             self.memory[orth].append(joint)
 
         oldSize, newSize = self.model.strip()
-        print 'stripped number of multigrams from %d to %d' % (oldSize, newSize)
+        print('stripped number of multigrams from %d to %d' % (oldSize, newSize))
 
         sequitur = self.model.sequitur
         for gra, pho in fragments:
@@ -160,7 +160,7 @@ class Fragmentizer:
                 joint = [ lmToken(gra, pho) for gra, pho in joint ]
                 translations.append(joint)
             except Translator.TranslationFailure:
-                print 'failed to represent "%s" using graphones' % word
+                print('failed to represent "%s" using graphones' % word)
                 translations.append(['[UNKNOWN]'])
         return translations
 
@@ -228,7 +228,7 @@ class HybridEventGenerator(EventGenerator):
             self.order)
 
     def frobnicateWithTrueWordRange(self, rawWords):
-        for i in xrange(len(rawWords)):
+        for i in range(len(rawWords)):
             history = [ f
                         for w in rawWords[max(0, i - self.order) : i]
                         for f in self.frobnicateWord(w) ]
@@ -278,28 +278,28 @@ class PhonemeEventGenerator(EventGenerator):
 # ===========================================================================
 def main(options, args):
     # 1. load reference lexicon
-    print 'loading reference lexicon ...'
+    print('loading reference lexicon ...')
     lexicon = loadBlissLexicon(options.lexicon)
     knownWords = set([ orth for orth, phon in lexicon ])
 
     # 2. load model for fragmentizing unknown words
     if options.subliminal_lexicon:
-        print 'loading subliminal lexicon ...'
+        print('loading subliminal lexicon ...')
         subliminalLexicon = loadBlissLexicon(options.subliminal_lexicon)
     else:
         subliminalLexicon = None
 
     if options.subliminal_g2p:
-        print 'loading subliminal g2p model ...'
-        subliminalG2p = pickle.load(open(options.subliminal_g2p))
+        print('loading subliminal g2p model ...')
+        subliminalG2p = pickle.load(open(options.subliminal_g2p, "rb"))
     else:
         subliminalG2p = None
 
     if options.g2pModel:
-        print 'loading g2p model ...'
-        model = pickle.load(open(options.g2pModel))
+        print('loading g2p model ...')
+        model = pickle.load(open(options.g2pModel, "rb"))
         oldSize, newSize = model.strip()
-        print 'stripped number of multigrams from %d to %d' % (oldSize, newSize)
+        print('stripped number of multigrams from %d to %d' % (oldSize, newSize))
 
         fragmentizer = Fragmentizer(model)
         if subliminalLexicon:
@@ -313,7 +313,7 @@ def main(options, args):
 
     # 3. add fragments to lexicon
     if options.write_lexicon:
-        print 'creating extended lexicon ...'
+        print('creating extended lexicon ...')
         xmlLexicon = ElementTree(file = options.lexicon)
         if options.model_type == 'phonemes':
             changeSyntaticToPhonetic(xmlLexicon)
@@ -325,7 +325,7 @@ def main(options, args):
     vocabulary = mGramCounts.ClosedVocablary()
     vocabulary.add(['<s>', '</s>'])
     if options.model_type == 'flat-hybrid':
-        vocabulary.add(ifilter(isLmToken, knownWords), soft=True)
+        vocabulary.add(filter(isLmToken, knownWords), soft=True)
     if graphones:
         vocabulary.add(starmap(lmToken, graphones))
     vocabulary.sort()
@@ -336,11 +336,11 @@ def main(options, args):
             phonemes.add('#1')
             if 'si' in phonemes: phonemes.remove('si')
             for p in sorted(phonemes):
-                print >> f, p
+                print(p, file=f)
         else:
             for w in vocabulary:
                 if w is not None:
-                    print >> f, w
+                    print(w, file=f)
 
     # 5./6. set-up LM event generator
     if options.write_counts or options.write_events:
@@ -360,14 +360,14 @@ def main(options, args):
 
     # 5. create modified LM training corpus
     if options.write_events:
-        print 'creating sequence model events ...'
+        print('creating sequence model events ...')
         f = gOpenOut(options.write_events, defaultEncoding)
         for event, count in events(gOpenIn(options.text, defaultEncoding)):
-            print >> f, repr(event), '\t', count
+            print(repr(event), '\t', count, file=f)
 
     # 6. count LM events
     if options.write_counts:
-        print 'creating sequence model counts ...'
+        print('creating sequence model counts ...')
         counts = mGramCounts.SimpleMultifileStorage()
         counts.addIter(events(gOpenIn(options.text, defaultEncoding)))
         mGramCounts.TextStorage.write(gOpenOut(options.write_counts, defaultEncoding), counts)

@@ -9,7 +9,7 @@ example usage:
   --memory-limit 5000000 --tempdir /var/tmp/
 """
 
-from __future__ import division
+
 
 __author__    = 'Maximilian Bisani'
 __version__   = '$LastChangedRevision: 96 $'
@@ -39,7 +39,6 @@ negligent actions or intended actions or fraudulent concealment.
 """
 
 import itertools
-from misc import set, sorted
 
 # ===========================================================================
 from IterMap import mergeSort, aggregate, consolidate, assertIsConsolidated, \
@@ -96,11 +95,11 @@ class DictStorage(Storage):
 
     def iter(self, sorted=False, consolidated=True):
         if sorted:
-            items = self.items.items()
+            items = list(self.items.items())
             items.sort()
             return iter(items)
         else:
-            return self.items.iteritems()
+            return iter(self.items.items())
 
     def __getitem__(self, key):
         return self.items.get(key)
@@ -392,9 +391,9 @@ class TextStorage(Storage, AbstractFileStorage):
     def write(cls, file, counts, conv=None):
         it = counts.iter(consolidated = True, sorted = True)
         for (history, predicted), value in it:
-            mGram = map(conv, (predicted,) + history)
+            mGram = list(map(conv, (predicted,) + history))
             mGram.reverse()
-            print >> file, '%s\t%s' % (' '.join(mGram), value)
+            print('%s\t%s' % (' '.join(mGram), value), file=file)
     write = classmethod(write)
 
     def set(self, other):
@@ -405,7 +404,7 @@ class TextStorage(Storage, AbstractFileStorage):
     def iter(self, sorted=True, consolidated=True):
         for line in gOpenIn(self.fname):
             fields = line.split()
-            mGram = map(self.inputConversion, fields[:-1])
+            mGram = list(map(self.inputConversion, fields[:-1]))
             mGram.reverse()
             item = (tuple(mGram[1:]), mGram[0])
             value = self.value(fields[-1])
@@ -435,7 +434,7 @@ def mGramsFromIter(sequence, order):
 def mGramsFromSequence(sequence, order):
     if order is None:
         order = len(sequence)
-    for i in xrange(len(sequence)):
+    for i in range(len(sequence)):
         history = sequence[max(0, i - order) : i]
         history.reverse()
         history = tuple(history)
@@ -503,19 +502,19 @@ class MGramReduceToOrderFilter(object):
 
     def __iter__(self):
         it = iter(self.rawIter())
-        (history, predicted), value = it.next()
+        (history, predicted), value = next(it)
         values = { predicted: value }
         for (h, p), v in it:
             if h == history:
                 values[p] = values.get(p, 0) + v
             elif h > history:
-                for predicted, value in sorted(values.iteritems()):
+                for predicted, value in sorted(values.items()):
                     yield (history, predicted), value
                 history = h
                 values = { p: v }
             else:
                 raise ValueError('sequence not ordered', history, h)
-        for predicted, value in sorted(values.iteritems()):
+        for predicted, value in sorted(values.items()):
             yield (history, predicted), value
 
 def mGramReduceToOrder(counts, order):
@@ -551,7 +550,7 @@ class Vocabulary(object):
         return iter(self.list)
 
     def indices(self):
-        return xrange(len(self.list))
+        return range(len(self.list))
 
 
 class OpenVocabulary(Vocabulary):
@@ -628,8 +627,8 @@ def main(options, args):
 
     if options.text:
         text = misc.gOpenIn(options.text)
-        sentences = itertools.imap(str.split, text)
-        sentences = itertools.imap(lambda s: map(vocabulary.map, s), sentences)
+        sentences = map(str.split, text)
+        sentences = map(lambda s: list(map(vocabulary.map, s)), sentences)
         grams = mGramsChainCount(sentences, options.order - 1)
         counts = createStorage(options)
         counts.addIter(grams)
@@ -641,12 +640,12 @@ def main(options, args):
         else:
             counts = TextStorage(options.read[0])
     else:
-        print >> sys.stderr, 'no counts'
+        print('no counts', file=sys.stderr)
         return
 
     if options.map_oov:
         if not options.vocabulary:
-            print >> sys.stderr, 'you need to specify a vocabulary'
+            print('you need to specify a vocabulary', file=sys.stderr)
         filt = MapUnknownsFilter(counts, vocabulary.list, vocabulary.unknownSymbol)
         mappedCounts = createStorage(options)
         mappedCounts.addIter(filt.rawIter())

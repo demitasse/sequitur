@@ -66,7 +66,7 @@ class NonMonotonousHistoriesError(RuntimeError):
 
 def contract(seq):
     it = iter(seq)
-    (history, predicted), value = it.next()
+    (history, predicted), value = next(it)
     values = [(predicted, value)]
     for (h, p), v in it:
         if h != history:

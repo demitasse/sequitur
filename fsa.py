@@ -94,7 +94,7 @@ def writeAsFsa(model, xml, shouldMakeClosure = True):
         currentId = idMap[current]
         left, right, current = current
 
-        currentDesc = map(sq.symbol, sm.historyAsTuple(current))
+        currentDesc = list(map(sq.symbol, sm.historyAsTuple(current)))
         currentDesc = [''.join(ll) + ':' + '_'.join(rr)
                        for ll, rr in currentDesc ]
         if left or right:
@@ -124,7 +124,7 @@ def writeAsFsa(model, xml, shouldMakeClosure = True):
 
 
 def main(options, args):
-    model = pickle.load(open(options.modelFile))
+    model = pickle.load(open(options.modelFile, "rb"))
     out = sys.stdout
     writeAsFsa(model, XmlWriter(out, 'UTF-8'))
 

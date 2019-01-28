@@ -1,4 +1,4 @@
-from __future__ import division
+
 
 __author__    = 'Maximilian Bisani'
 __version__   = '$LastChangedRevision: 96 $'
@@ -28,7 +28,6 @@ negligent actions or intended actions or fraudulent concealment.
 """
 
 import copy, math
-from misc import set
 import sequitur_
 
 
@@ -139,7 +138,7 @@ class BackOffModel:
         self.prob[key] = value
 
     def __iter__(self):
-        return self.prob.iteritems()
+        return iter(self.prob.items())
 
     def perplexity(self, evidence):
         total = 0.0
@@ -154,15 +153,15 @@ class BackOffModel:
             self.inventory = inventory
             data = []
             if inventory is None:
-                for (history, predicted), probability in self.prob.iteritems():
+                for (history, predicted), probability in self.prob.items():
                     try:
                         data.append((history, predicted, - math.log(probability)))
                     except (ValueError, OverflowError):
                         if (history, predicted) != ((), None):
-                            print 'SequenceModel.py:116: cannot take logarithm of zero probability', \
-                                  history, predicted, probability
+                            print('SequenceModel.py:116: cannot take logarithm of zero probability', \
+                                  history, predicted, probability)
             else:
-                for (history, predicted), probability in self.prob.iteritems():
+                for (history, predicted), probability in self.prob.items():
                     history = tuple(map(inventory.index, history))
                     if predicted is not None: predicted = inventory.index(predicted)
                     data.append((history, predicted, - math.log(probability)))
@@ -174,26 +173,26 @@ class BackOffModel:
         return self.compiled
 
     def showMostProbable(self, f, inventory, limit = None):
-        sample = [ (probability, inventory(predicted), map(inventory, history))
-                   for (history, predicted), probability in self.prob.iteritems()
+        sample = [ (probability, inventory(predicted), list(map(inventory, history)))
+                   for (history, predicted), probability in self.prob.items()
                    if predicted is not None ]
         sample.sort()
         sample.reverse()
         if limit and 1.5*limit < len(sample):
             for probability, predicted, history in sample[:limit]:
-                print >> f, predicted, history, probability
-            print >> f, '...'
+                print(predicted, history, probability, file=f)
+            print('...', file=f)
             for probability, predicted, history in sample[-int(limit/2):]:
-                print >> f, predicted, history, probability
+                print(predicted, history, probability, file=f)
         else:
             for probability, predicted, history in sample:
-                print >> f, predicted, history, probability
-        print >> f, 'n-grams', len(sample)
-        print >> f, 'uni-gram total', sum([ probability for probability, predicted, history in sample if len(history) == 0 ])
+                print(predicted, history, probability, file=f)
+        print('n-grams', len(sample), file=f)
+        print('uni-gram total', sum([ probability for probability, predicted, history in sample if len(history) == 0 ]), file=f)
 
     def rampUp(self):
         newHistories = set()
-        for (history, predicted), probability in self.prob.iteritems():
+        for (history, predicted), probability in self.prob.items():
             if predicted is None: continue
             newHistory = history + (predicted,)
             if (newHistory, None) not in self.prob:
@@ -218,7 +217,7 @@ class SequenceModelEstimator:
             return []
 
     def makeKneserNeyDiscounting(self, evidences, discount):
-        levels = range(len(evidences))
+        levels = list(range(len(evidences)))
         levels.reverse()
         result = []
         evidence = EvidenceList()
@@ -284,22 +283,22 @@ class SequenceModel(sequitur_.SequenceModel):
         return len(self.get())
 
     def showMostProbable(self, f, inventory, limit = None):
-        sample = [ (math.exp(-score), inventory(predicted), map(inventory, history))
+        sample = [ (math.exp(-score), inventory(predicted), list(map(inventory, history)))
                    for history, predicted, score in self.get()
                    if predicted is not None ]
         sample.sort()
         sample.reverse()
         if limit and 1.5*limit < len(sample):
             for probability, predicted, history in sample[:limit]:
-                print >> f, predicted, history, probability
-            print >> f, '...'
+                print(predicted, history, probability, file=f)
+            print('...', file=f)
             for probability, predicted, history in sample[-int(limit/2):]:
-                print >> f, predicted, history, probability
+                print(predicted, history, probability, file=f)
         else:
             for probability, predicted, history in sample:
-                print >> f, predicted, history, probability
-        print >> f, 'n-grams', len(sample)
-        print >> f, 'uni-gram total', sum([ probability for probability, predicted, history in sample if len(history) == 0 ])
+                print(predicted, history, probability, file=f)
+        print('n-grams', len(sample), file=f)
+        print('uni-gram total', sum([ probability for probability, predicted, history in sample if len(history) == 0 ]), file=f)
 
     def rampUp(self):
         data = self.get()

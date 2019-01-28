@@ -29,20 +29,20 @@ import unittest
 from LanguageModel import *
 from mGramCounts import *
 TestCase = unittest.TestCase
-import difflib, itertools, misc, StringIO
+import difflib, itertools, misc, io
 
 
-class EqualFile(StringIO.StringIO):
+class EqualFile(io.StringIO):
     def __init__(self, fname):
-        StringIO.StringIO.__init__(self)
+        io.StringIO.__init__(self)
         self.reference = gOpenIn(fname).read()
         self.data = None
 
     def close(self):
         self.data = self.getvalue()
-        StringIO.StringIO.close(self)
+        io.StringIO.close(self)
 
-    def __nonzero__(self):
+    def __bool__(self):
         if self.data is None:
             self.data = self.getvalue()
         if self.data == self.reference:
@@ -58,7 +58,7 @@ class EqualFile(StringIO.StringIO):
             self.reference.split('\n'),
             self.data.split('\n'))
         for line in diff:
-            print >> sys.stderr, line
+            print(line, file=sys.stderr)
 
 
 class MGramCountTestCase(TestCase):
@@ -75,33 +75,33 @@ class MGramCountTestCase(TestCase):
 
     def testLoadVocabulary(self):
         vocabulary = loadVocabulary('tests/nab-5k-vocabulary.txt.gz')
-        self.failUnlessEqual(vocabulary.size(), 4990)
+        self.assertEqual(vocabulary.size(), 4990)
 
     order = 2
 
     def templateTestRawCounts(self, StorageClass):
         text = misc.gOpenIn('tests/nab-mini-corpus.txt.gz')
-        sentences = itertools.imap(str.split, text)
+        sentences = map(str.split, text)
         grams = mGramsChainCount(sentences, self.order)
         counts = StorageClass()
         counts.addIter(grams)
 
         f = EqualFile('tests/nab-mini-corpus.raw-counts.gz')
         TextStorage.write(f, counts)
-        self.failUnless(f)
+        self.assertTrue(f)
 
     def templateTestMappedCounts(self, StorageClass):
         vocabulary = loadVocabulary('tests/nab-5k-vocabulary.txt.gz')
         text = misc.gOpenIn('tests/nab-mini-corpus.txt.gz')
-        sentences = itertools.imap(str.split, text)
-        sentences = itertools.imap(lambda s: map(vocabulary.map, s), sentences)
+        sentences = map(str.split, text)
+        sentences = map(lambda s: list(map(vocabulary.map, s)), sentences)
         grams = mGramsChainCount(sentences, self.order)
         counts = StorageClass()
         counts.addIter(grams)
 
         f = EqualFile('tests/nab-mini-corpus.mapped-counts.gz')
         TextStorage.write(f, counts)
-        self.failUnless(f)
+        self.assertTrue(f)
 
     def testCoutsOfCounts(self):
         counts = TextStorage('tests/nab-mini-corpus.raw-counts.gz')
@@ -109,7 +109,7 @@ class MGramCountTestCase(TestCase):
                 for order in range(self.order) ]
         reference = eval(open('tests/nab-mini-corpus.raw-coc').read())
         for order in range(self.order):
-            self.failUnlessEqual(coc[order], reference[order])
+            self.assertEqual(coc[order], reference[order])
 
 for StorageClass in [DictStorage, ListStorage, SimpleMultifileStorage, BiHeapMultifileStorage]:
     def testRawCounts(self, StorageClass=StorageClass):
@@ -150,7 +150,7 @@ class LanguageModelTestCase(TestCase):
         f = EqualFile('tests/nab-mini-corpus.unigram.lm.gz')
         lm = LmArpaWriter(f, 0)
         self.builder.build(self.counts, lm)
-        self.failUnless(f)
+        self.assertTrue(f)
 
     def testTrigram(self):
         self.builder.setHighestOrder(2)
@@ -158,7 +158,7 @@ class LanguageModelTestCase(TestCase):
         f = EqualFile('tests/nab-mini-corpus.trigram.lm.gz')
         lm = LmArpaWriter(f, 2)
         self.builder.build(self.counts, lm)
-        self.failUnless(f)
+        self.assertTrue(f)
 
 
 if __name__ == '__main__':

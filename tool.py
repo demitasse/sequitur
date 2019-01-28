@@ -62,13 +62,13 @@ def run(main, options, args):
         status = runMain(main, options, args)
     except UsageError:
         status = 1
-        print >> sys.stdout, "Try '%s --help'" % sys.argv[0]
+        print("Try '%s --help'" % sys.argv[0], file=sys.stdout)
 
     if options.resource_usage:
         stopTime = datetime.datetime.now()
         stopClock = time.clock()
-        print >> sys.stderr, 'elapsed time:   ', stopTime - startTime
-        print >> sys.stderr, 'processor time: ', datetime.timedelta(seconds=stopClock - startClock)
+        print('elapsed time:   ', stopTime - startTime, file=sys.stderr)
+        print('processor time: ', datetime.timedelta(seconds=stopClock - startClock), file=sys.stderr)
 
     sys.exit(status)
 
