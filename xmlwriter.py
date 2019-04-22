@@ -24,6 +24,10 @@ agreed upon which comes closest to what the parties intended
 commercially. In any case guarantee/warranty shall be limited to gross
 negligent actions or intended actions or fraudulent concealment.
 """
+import sys
+if sys.version_info[0] == 2:
+    import codecs
+    open = codecs.open
 
 import string, types
 from functools import reduce

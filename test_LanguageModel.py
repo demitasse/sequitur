@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 __author__    = 'Maximilian Bisani'
 __version__   = '$LastChangedRevision: 95 $'
 __date__      = '$LastChangedDate: 2007-06-02 16:32:35 +0200 (Sat, 02 Jun 2007) $'
@@ -24,6 +26,7 @@ agreed upon which comes closest to what the parties intended
 commercially. In any case guarantee/warranty shall be limited to gross
 negligent actions or intended actions or fraudulent concealment.
 """
+import sys
 
 import unittest
 from LanguageModel import *

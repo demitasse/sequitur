@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 __author__    = 'Maximilian Bisani'
 __version__   = '$LastChangedRevision: 96 $'
 __date__      = '$LastChangedDate: 2007-06-02 18:14:47 +0200 (Sat, 02 Jun 2007) $'

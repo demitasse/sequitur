@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 __author__    = 'Maximilian Bisani'
 __version__   = '$LastChangedRevision: 95 $'
 __date__      = '$LastChangedDate: 2007-06-02 16:32:35 +0200 (Sat, 02 Jun 2007) $'
@@ -38,10 +40,10 @@ class SequenceModelEstimatorTestCase(unittest.TestCase):
                 sum = 0.0
                 for w in preds:
                     p = model((u, v), w)
-#                   print u, v, w, p
+#                   print(u, v, w, p)
                     sum += p
-#               print u, v, sum
-#               print
+#               print(u, v, sum)
+#               print()
                 self.assertAlmostEqual(sum, 1.0)
 
     def testEmpty(self):
@@ -61,7 +63,7 @@ class SequenceModelEstimatorTestCase(unittest.TestCase):
         model = self.estimator.make(3, evidence, [0.8, 1.0, 0.0])
 #       self.show(model)
         self.failUnlessNormalized(model)
-#       print model.perplexity(evidence)
+#       print(model.perplexity(evidence))
 
     def show(sslf, model):
         for (history, predicted), probability in model:

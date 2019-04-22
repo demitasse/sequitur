@@ -1,4 +1,4 @@
-
+from __future__ import print_function
 
 __author__    = 'Maximilian Bisani'
 __version__   = '$LastChangedRevision: 96 $'
@@ -29,6 +29,9 @@ negligent actions or intended actions or fraudulent concealment.
 
 # ===========================================================================
 import sys
+if sys.version_info[0] == 2:
+    import codecs
+    open = codecs.open
 
 import gc, os, resource, sys, types
 

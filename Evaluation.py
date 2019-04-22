@@ -1,4 +1,4 @@
-
+from __future__ import print_function
 
 __author__    = 'Maximilian Bisani'
 __version__   = '$LastChangedRevision: 96 $'
