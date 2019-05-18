@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-from __future__ import print_function
-
 """
 Grapheme-to-Phoneme Conversion
 
 Samples can be either in plain format (one word per line followed by
 phonetic transcription) or Bliss XML Lexicon format.
 """
+from __future__ import print_function
 
 __author__    = 'Maximilian Bisani'
 __version__   = '$LastChangedRevision: 95 $'
